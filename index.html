@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bucin Space Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1000') no-repeat center center;
+            background-size: cover;
+        }
+        
+        #player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ffffff"><path d="M12 2L4 12l8 10 8-10-8-10zm0 15a5 5 0 110-10 5 5 0 010 10z"/></svg>');
+            background-size: contain;
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+        
+        .heart {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23ff0000"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>');
+            background-size: contain;
+            z-index: 5;
+            animation: pulse 1s infinite;
+        }
+        
+        .asteroid {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888888"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>');
+            background-size: contain;
+            z-index: 5;
+            transform: rotate(0deg);
+            animation: rotate 5s linear infinite;
+        }
+        
+        #score-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 1.5rem;
+            z-index: 20;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+            display: none;
+        }
+        
+        #game-over h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff3366;
+        }
+        
+        #final-score {
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+        
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #ff3366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #restart-btn:hover {
+            background-color: #ff0055;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 40;
+        }
+        
+        #start-screen h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ff3366;
+            text-align: center;
+        }
+        
+        #start-screen p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        #start-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #ff3366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        #start-btn:hover {
+            background-color: #ff0055;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            #player {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .heart, .asteroid {
+                width: 25px;
+                height: 25px;
+            }
+            
+            #score-container {
+                font-size: 1.2rem;
+            }
+            
+            #game-over h1, #start-screen h1 {
+                font-size: 2rem;
+            }
+            
+            #final-score {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="player"></div>
+        <div id="score-container">Hati: <span id="score">0</span></div>
+        
+        <div id="game-over">
+            <h1>Game Over!</h1>
+            <div id="final-score">Kamu mengumpulkan <span id="end-score">0</span> hati untuk pacarmu</div>
+            <button id="restart-btn">Main Lagi</button>
+        </div>
+        
+        <div id="start-screen">
+            <h1>Bucin Space Adventure</h1>
+            <p>Bantu bayu mengumpulkan hati untuk enda kekasihnya! Hindari asteroid dan kumpulkan hati sebanyak mungkin.</p>
+            <p>Gerakan: Sentuh/tahan di layar atau gunakan tombol keyboard</p>
+            <button id="start-btn">Mulai Petualangan</button>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let gameActive = false;
+        let playerX = 0;
+        let playerY = 0;
+        let playerSpeed = 5;
+        let keys = {};
+        let hearts = [];
+        let asteroids = [];
+        let gameWidth = 0;
+        let gameHeight = 0;
+        let heartInterval;
+        let asteroidInterval;
+        let animationFrame;
+        
+        // DOM elements
+        const player = document.getElementById('player');
+        const scoreElement = document.getElementById('score');
+        const gameContainer = document.getElementById('game-container');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('end-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const startScreen = document.getElementById('start-screen');
+        const startBtn = document.getElementById('start-btn');
+        
+        // Initialize game
+        function initGame() {
+            // Set game dimensions
+            gameWidth = gameContainer.clientWidth;
+            gameHeight = gameContainer.clientHeight;
+            
+            // Position player in the center
+            playerX = gameWidth / 2 - player.offsetWidth / 2;
+            playerY = gameHeight / 2 - player.offsetHeight / 2;
+            updatePlayerPosition();
+            
+            // Clear any existing hearts and asteroids
+            hearts.forEach(heart => heart.element.remove());
+            asteroids.forEach(asteroid => asteroid.element.remove());
+            hearts = [];
+            asteroids = [];
+            
+            // Reset score
+            score = 0;
+            scoreElement.textContent = score;
+            
+            // Hide game over screen
+            gameOverScreen.style.display = 'none';
+            
+            // Start game loops
+            gameActive = true;
+            
+            // Create hearts and asteroids at intervals
+            heartInterval = setInterval(createHeart, 2000);
+            asteroidInterval = setInterval(createAsteroid, 1500);
+            
+            // Start game loop
+            gameLoop();
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (!gameActive) return;
+            
+            // Move player based on keyboard input
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                playerX = Math.max(0, playerX - playerSpeed);
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                playerX = Math.min(gameWidth - player.offsetWidth, playerX + playerSpeed);
+            }
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                playerY = Math.max(0, playerY - playerSpeed);
+            }
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                playerY = Math.min(gameHeight - player.offsetHeight, playerY + playerSpeed);
+            }
+            
+            updatePlayerPosition();
+            
+            // Move hearts
+            hearts.forEach((heart, index) => {
+                heart.y += heart.speed;
+                heart.element.style.top = heart.y + 'px';
+                
+                // Check if heart is collected or out of screen
+                if (checkCollision(player, heart.element)) {
+                    // Collect heart
+                    heart.element.remove();
+                    hearts.splice(index, 1);
+                    score++;
+                    scoreElement.textContent = score;
+                    createParticles(heart.x + 15, heart.y + 15, 'red');
+                } else if (heart.y > gameHeight) {
+                    // Remove heart if out of screen
+                    heart.element.remove();
+                    hearts.splice(index, 1);
+                }
+            });
+            
+            // Move asteroids
+            asteroids.forEach((asteroid, index) => {
+                asteroid.y += asteroid.speed;
+                asteroid.x += asteroid.xSpeed;
+                
+                // Bounce off walls
+                if (asteroid.x <= 0 || asteroid.x >= gameWidth - asteroid.element.offsetWidth) {
+                    asteroid.xSpeed = -asteroid.xSpeed;
+                }
+                
+                asteroid.element.style.top = asteroid.y + 'px';
+                asteroid.element.style.left = asteroid.x + 'px';
+                
+                // Check collision with player
+                if (checkCollision(player, asteroid.element)) {
+                    gameOver();
+                } else if (asteroid.y > gameHeight) {
+                    // Remove asteroid if out of screen
+                    asteroid.element.remove();
+                    asteroids.splice(index, 1);
+                }
+            });
+            
+            animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        // Update player position
+        function updatePlayerPosition() {
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+        }
+        
+        // Create a new heart
+        function createHeart() {
+            if (!gameActive) return;
+            
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            gameContainer.appendChild(heart);
+            
+            const x = Math.random() * (gameWidth - 30);
+            const speed = 2 + Math.random() * 3;
+            
+            heart.style.left = x + 'px';
+            heart.style.top = '-30px';
+            
+            hearts.push({
+                element: heart,
+                x: x,
+                y: -30,
+                speed: speed
+            });
+        }
+        
+        // Create a new asteroid
+        function createAsteroid() {
+            if (!gameActive) return;
+            
+            const asteroid = document.createElement('div');
+            asteroid.className = 'asteroid';
+            gameContainer.appendChild(asteroid);
+            
+            const x = Math.random() * (gameWidth - 40);
+            const speed = 3 + Math.random() * 4;
+            const xSpeed = (Math.random() - 0.5) * 2;
+            
+            asteroid.style.left = x + 'px';
+            asteroid.style.top = '-40px';
+            
+            asteroids.push({
+                element: asteroid,
+                x: x,
+                y: -40,
+                speed: speed,
+                xSpeed: xSpeed
+            });
+        }
+        
+        // Check collision between two elements
+        function checkCollision(element1, element2) {
+            const rect1 = element1.getBoundingClientRect();
+            const rect2 = element2.getBoundingClientRect();
+            
+            return !(
+                rect1.right < rect2.left || 
+                rect1.left > rect2.right || 
+                rect1.bottom < rect2.top || 
+                rect1.top > rect2.bottom
+            );
+        }
+        
+        // Game over
+        function gameOver() {
+            gameActive = false;
+            clearInterval(heartInterval);
+            clearInterval(asteroidInterval);
+            cancelAnimationFrame(animationFrame);
+            
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+            
+            // Create explosion particles
+            createParticles(playerX + player.offsetWidth / 2, playerY + player.offsetHeight / 2, 'white');
+        }
+        
+        // Create particles for effects
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '4px';
+                particle.style.height = '4px';
+                particle.style.backgroundColor = color;
+                particle.style.borderRadius = '50%';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.pointerEvents = 'none';
+                
+                gameContainer.appendChild(particle);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 3;
+                const lifetime = 1000 + Math.random() * 1000;
+                
+                const xSpeed = Math.cos(angle) * speed;
+                const ySpeed = Math.sin(angle) * speed;
+                
+                let startTime = Date.now();
+                
+                function animateParticle() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / lifetime;
+                    
+                    if (progress >= 1) {
+                        particle.remove();
+                        return;
+                    }
+                    
+                    particle.style.left = (x + xSpeed * elapsed / 20) + 'px';
+                    particle.style.top = (y + ySpeed * elapsed / 20) + 'px';
+                    particle.style.opacity = 1 - progress;
+                    
+                    requestAnimationFrame(animateParticle);
+                }
+                
+                animateParticle();
+            }
+        }
+        
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Touch controls for mobile
+        let touchX = 0;
+        let touchY = 0;
+        
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchX = touch.clientX;
+            touchY = touch.clientY;
+        });
+        
+        gameContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!gameActive) return;
+            
+            const touch = e.touches[0];
+            const diffX = touch.clientX - touchX;
+            const diffY = touch.clientY - touchY;
+            
+            playerX = Math.max(0, Math.min(gameWidth - player.offsetWidth, playerX + diffX));
+            playerY = Math.max(0, Math.min(gameHeight - player.offsetHeight, playerY + diffY));
+            
+            touchX = touch.clientX;
+            touchY = touch.clientY;
+            
+            updatePlayerPosition();
+        });
+        
+        // Mouse controls for desktop
+        let mouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        gameContainer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            mouseDown = true;
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        gameContainer.addEventListener('mousemove', (e) => {
+            e.preventDefault();
+            if (!gameActive || !mouseDown) return;
+            
+            const diffX = e.clientX - mouseX;
+            const diffY = e.clientY - mouseY;
+            
+            playerX = Math.max(0, Math.min(gameWidth - player.offsetWidth, playerX + diffX));
+            playerY = Math.max(0, Math.min(gameHeight - player.offsetHeight, playerY + diffY));
+            
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            updatePlayerPosition();
+        });
+        
+        gameContainer.addEventListener('mouseup', () => {
+            mouseDown = false;
+        });
+        
+        gameContainer.addEventListener('mouseleave', () => {
+            mouseDown = false;
+        });
+        
+        // Start and restart buttons
+        startBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            initGame();
+        });
+        
+        restartBtn.addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            initGame();
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (gameActive) {
+                gameWidth = gameContainer.clientWidth;
+                gameHeight = gameContainer.clientHeight;
+                
+                // Keep player within bounds
+                playerX = Math.max(0, Math.min(gameWidth - player.offsetWidth, playerX));
+                playerY = Math.max(0, Math.min(gameHeight - player.offsetHeight, playerY));
+                updatePlayerPosition();
+            }
+        });
+    </script>
+</body>
+</html>
